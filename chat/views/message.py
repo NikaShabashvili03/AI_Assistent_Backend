@@ -4,10 +4,7 @@ from accounts.permissions import IsAuthenticated
 from rest_framework import status
 from ..models import Message, Conversation, Assistant
 from ..serializers import MessageSerializer, MessageCreateSerializer
-from ollama import Ollama
-
-MODEL_NAME = "llama3"  # Snap Ollama uses "llama3", not "llama3.1"
-client = Ollama()       # Initialize Ollama client
+from ..utils.ollama import ask_ollama
 
 class MessageListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -55,15 +52,8 @@ class MessageCreateView(APIView):
 
         prompt_text = f"{combined_prompt}{conversation_history}\nuser: {user_message.content}"
 
-        # Call Ollama locally via Python client
-        try:
-            response = client.chat(
-                model=MODEL_NAME,
-                messages=[{"role": "user", "content": prompt_text}]
-            )
-            ai_content = response  # Ollama returns string by default
-        except Exception as e:
-            ai_content = f"Ollama error: {e}"
+        # Call Ollama via CLI
+        ai_content = ask_ollama(prompt_text)
 
         # Save assistant message
         assistant_serializer = MessageCreateSerializer(
