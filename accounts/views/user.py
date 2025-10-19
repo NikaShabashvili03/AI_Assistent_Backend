@@ -8,8 +8,6 @@ from django.utils.timezone import now
 from datetime import timedelta
 from ..models import Session
 from ..utils import get_client_ip
-from rest_framework.views import APIView
-from accounts.models import User
     
 class RegisterView(generics.GenericAPIView):
     serializer_class = UserRegisterViewSerializer
@@ -54,7 +52,7 @@ class LoginView(generics.GenericAPIView):
         response = Response(user_data, status=status.HTTP_200_OK)
         response.set_cookie(
             'sessionId', session.session_token, expires=expires_at, 
-            samesite='None', secure=True
+            samesite='None', secure=False
         )
         csrf_token = get_token(request)
         response['X-CSRFToken'] = csrf_token
