@@ -57,6 +57,11 @@ CORS_ALLOWED_ORIGINS = [
     'https://api.mmai.space'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.mmai.space",
+    "https://www.api.mmai.space",
+]
+
 # Application definition
 
 INSTALLED_APPS = [
