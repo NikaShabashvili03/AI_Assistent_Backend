@@ -1,8 +1,8 @@
 # chat/ollama_client.py
 import subprocess
 
-OLLAMA_MODEL = "qwen3-0.6b"
-OLLAMA_PATH = "/snap/bin/ollama" 
+OLLAMA_MODEL = "qwen3:0.6b"
+OLLAMA_PATH = "/snap/bin/ollama"
 
 def ask_ollama(prompt: str) -> str:
     try:
