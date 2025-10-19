@@ -39,23 +39,19 @@ class MessageCreateView(APIView):
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
-        # Combine assistant prompts
         combined_prompt = ""
         if assistants.exists():
             combined_prompt = "\n".join(
                 [f"System ({a.name}): {a.prompt}" for a in assistants]
             ) + "\n"
 
-        # Conversation history
         previous_messages = conversation.messages.order_by('created_at')
         conversation_history = "\n".join(f"{msg.role}: {msg.content}" for msg in previous_messages)
 
         prompt_text = f"{combined_prompt}{conversation_history}\nuser: {user_message.content}"
 
-        # Call Ollama via CLI
         ai_content = ask_ollama(prompt_text)
 
-        # Save assistant message
         assistant_serializer = MessageCreateSerializer(
             data={"content": ai_content},
             context={'conversation': conversation, 'role': 'assistant'}
