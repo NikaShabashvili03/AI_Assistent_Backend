@@ -29,7 +29,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
-    '72.61.180.182'
+    '72.61.180.182',
+    'api.mmai.space'
 ]
 
 
@@ -52,6 +53,8 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://mmai.space',
+    'https://api.mmai.space'
 ]
 
 # Application definition
