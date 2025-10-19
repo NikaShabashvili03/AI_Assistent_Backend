@@ -52,7 +52,7 @@ class LoginView(generics.GenericAPIView):
         response = Response(user_data, status=status.HTTP_200_OK)
         response.set_cookie(
             'sessionId', session.session_token, expires=expires_at, 
-            samesite='None', secure=True, httponly=True
+            samesite='None', secure=False, httponly=True
         )
         csrf_token = get_token(request)
         response['X-CSRFToken'] = csrf_token
