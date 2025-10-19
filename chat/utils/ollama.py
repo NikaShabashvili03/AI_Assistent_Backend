@@ -1,7 +1,9 @@
+from ..serializers import MessageSerializer, MessageCreateSerializer
+from ..models import Message, Conversation, Assistant
 import subprocess
 
 OLLAMA_MODEL = "llama3"
-OLLAMA_PATH = "/snap/bin/ollama"  # full path
+OLLAMA_PATH = "/snap/bin/ollama"
 
 def ask_ollama(prompt: str) -> str:
     try:
@@ -12,13 +14,9 @@ def ask_ollama(prompt: str) -> str:
             stderr=subprocess.PIPE,
             text=True
         )
-
-        # send prompt to stdin and close input
-        stdout, stderr = process.communicate(prompt)
-
+        stdout, stderr = process.communicate(prompt + "\n")  # add newline
         if process.returncode != 0:
             return f"Ollama error: {stderr.strip()}"
-
         return stdout.strip()
     except Exception as e:
         return f"Ollama exception: {e}"
