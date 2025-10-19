@@ -62,8 +62,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.api.mmai.space",
 ]
 
-# Application definition
-
 INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
