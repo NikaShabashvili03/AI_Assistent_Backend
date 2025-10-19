@@ -2,7 +2,7 @@ from ..serializers import MessageSerializer, MessageCreateSerializer
 from ..models import Message, Conversation, Assistant
 import subprocess
 
-OLLAMA_MODEL = "llama3"
+OLLAMA_MODEL = "llama2-mini"
 OLLAMA_PATH = "/snap/bin/ollama"
 
 def ask_ollama(prompt: str) -> str:
