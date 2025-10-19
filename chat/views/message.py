@@ -4,11 +4,10 @@ from accounts.permissions import IsAuthenticated
 from rest_framework import status
 from ..models import Message, Conversation, Assistant
 from ..serializers import MessageSerializer, MessageCreateSerializer
-import requests
-import json
+from ollama import Ollama
 
-OLLAMA_API_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "llama3.1"
+MODEL_NAME = "llama3"  # Snap Ollama uses "llama3", not "llama3.1"
+client = Ollama()       # Initialize Ollama client
 
 class MessageListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -35,6 +34,7 @@ class MessageCreateView(APIView):
         assistant_ids = request.data.get('assistant_ids', [])
         assistants = Assistant.objects.filter(id__in=assistant_ids)
 
+        # Save user message
         user_serializer = MessageCreateSerializer(
             data=request.data,
             context={'conversation': conversation, 'role': 'user'}
@@ -42,37 +42,30 @@ class MessageCreateView(APIView):
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
+        # Combine assistant prompts
         combined_prompt = ""
         if assistants.exists():
             combined_prompt = "\n".join(
                 [f"System ({a.name}): {a.prompt}" for a in assistants]
             ) + "\n"
 
+        # Conversation history
         previous_messages = conversation.messages.order_by('created_at')
         conversation_history = "\n".join(f"{msg.role}: {msg.content}" for msg in previous_messages)
+
         prompt_text = f"{combined_prompt}{conversation_history}\nuser: {user_message.content}"
 
+        # Call Ollama locally via Python client
         try:
-            response = requests.post(
-                OLLAMA_API_URL,
-                json={"model": MODEL_NAME, "prompt": prompt_text},
-                timeout=60
+            response = client.chat(
+                model=MODEL_NAME,
+                messages=[{"role": "user", "content": prompt_text}]
             )
-            response.raise_for_status()
-
-            ai_responses = []
-            for line in response.text.strip().split("\n"):
-                try:
-                    obj = json.loads(line)
-                    if "response" in obj:
-                        ai_responses.append(obj["response"])
-                except json.JSONDecodeError:
-                    continue
-
-            ai_content = "".join(ai_responses) if ai_responses else "No response from AI."
+            ai_content = response  # Ollama returns string by default
         except Exception as e:
             ai_content = f"Ollama error: {e}"
 
+        # Save assistant message
         assistant_serializer = MessageCreateSerializer(
             data={"content": ai_content},
             context={'conversation': conversation, 'role': 'assistant'}
