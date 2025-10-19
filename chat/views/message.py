@@ -44,11 +44,10 @@ class MessageCreateView(APIView):
                 [f"System ({a.name}): {a.prompt}" for a in assistants]
             ) + "\n"
 
-        # previous_messages = conversation.messages.order_by('created_at')
-        # conversation_history = "\n".join(f"{msg.role}: {msg.content}" for msg in previous_messages)
+        previous_messages = conversation.messages.order_by('created_at')
+        conversation_history = "\n".join(f"{msg.role}: {msg.content}" for msg in previous_messages)
 
-        # prompt_text = f"{combined_prompt}{conversation_history}\nuser: {user_message.content}"
-        prompt_text = f"{combined_prompt}\nuser: {user_message.content}"
+        prompt_text = f"{combined_prompt}{conversation_history}\nuser: {user_message.content}"
 
         ai_content = ask_ollama(prompt_text)
 
