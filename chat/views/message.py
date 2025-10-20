@@ -79,25 +79,23 @@ class MessageCreateView(APIView):
 
         first_message_from_assistant = conversation.messages.filter(role='user').first()
 
-        print(first_message_from_assistant)
+        conversation.title = first_message_from_assistant.content
+        conversation.save()
 
-        if first_message_from_assistant:
-            try:
-                new_conversation_title = ask_ollama(
-                    f"Summarise this sentence in a few words: {first_message_from_assistant.content}"
-                )
-                conversation.title = new_conversation_title
-                conversation.save()
-            except Exception as e:
-                # If summarization fails, skip updating title but do not block response
-                new_conversation_title = None
-
-        else:
-            new_conversation_title = None
+        # if first_message_from_assistant:
+        #     try:
+        #         new_conversation_title = ask_ollama(
+        #             f"Summarise this sentence in a few words: {first_message_from_assistant.content}"
+        #         )
+        #         conversation.title = new_conversation_title
+        #         conversation.save()
+        #     except Exception as e:
+        #         new_conversation_title = None
+        
 
         return Response({
             "user_message": MessageSerializer(user_message).data,
             "assistant_message": MessageSerializer(assistant_message).data,
             "assistants": [a.name for a in assistants],
-            "conversation_new_title": new_conversation_title,
+            "conversation_new_title": first_message_from_assistant.content,
         }, status=status.HTTP_201_CREATED)
