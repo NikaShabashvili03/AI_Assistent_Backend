@@ -54,7 +54,7 @@ class MessageCreateView(APIView):
 
         # Build prompt for AI
         prompt_text = (
-            "write short answers only\n"
+            "be as concise and laconic as possible, give only an answer, do not think out loud\n"
             f"{combined_prompt}"
             f"{conversation_history}\n"
             f"user: {user_message.content}"
@@ -81,17 +81,6 @@ class MessageCreateView(APIView):
 
         conversation.title = first_message_from_assistant.content
         conversation.save()
-
-        # if first_message_from_assistant:
-        #     try:
-        #         new_conversation_title = ask_ollama(
-        #             f"Summarise this sentence in a few words: {first_message_from_assistant.content}"
-        #         )
-        #         conversation.title = new_conversation_title
-        #         conversation.save()
-        #     except Exception as e:
-        #         new_conversation_title = None
-        
 
         return Response({
             "user_message": MessageSerializer(user_message).data,
