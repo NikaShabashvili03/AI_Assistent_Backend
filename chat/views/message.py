@@ -24,13 +24,14 @@ class MessageCreateView(APIView):
 
     def post(self, request, conversation_id):
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
+            conversation = Conversation.objects.get(id=conversation_id, user=request.user)
         except Conversation.DoesNotExist:
             return Response({"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
 
         assistant_ids = request.data.get('assistant_ids', [])
         assistants = Assistant.objects.filter(id__in=assistant_ids)
 
+        # Create user message
         user_serializer = MessageCreateSerializer(
             data=request.data,
             context={'conversation': conversation, 'role': 'user'}
@@ -38,37 +39,64 @@ class MessageCreateView(APIView):
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
+        # Build system prompt from assistants if any
         combined_prompt = ""
         if assistants.exists():
             combined_prompt = "\n".join(
                 [f"System ({a.name}): {a.prompt}" for a in assistants]
             ) + "\n"
-        
+
+        # Get the last 10 messages in chronological order
         previous_messages = conversation.messages.order_by('-created_at')[:10]
-        previous_messages = reversed(previous_messages)
+        previous_messages = reversed(previous_messages)  # chronological order
+
         conversation_history = "\n".join(f"{msg.role}: {msg.content}" for msg in previous_messages)
 
-        prompt_text = f"write short answers only, {combined_prompt}{conversation_history}\nuser: {user_message.content}"
+        # Build prompt for AI
+        prompt_text = (
+            "write short answers only\n"
+            f"{combined_prompt}"
+            f"{conversation_history}\n"
+            f"user: {user_message.content}"
+        )
 
-        ai_content = ask_ollama(prompt_text)
+        # Call AI service
+        try:
+            ai_content = ask_ollama(prompt_text)
+        except Exception as e:
+            return Response(
+                {"error": f"AI service failed: {str(e)}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
+        # Save assistant's response
         assistant_serializer = MessageCreateSerializer(
             data={"content": ai_content},
             context={'conversation': conversation, 'role': 'assistant'}
         )
         assistant_serializer.is_valid(raise_exception=True)
         assistant_message = assistant_serializer.save()
-        
+
+        # Update conversation title based on the first assistant message in this conversation
         first_message_from_assistant = conversation.messages.filter(role='assistant').first()
 
-        conersation_new_title = ask_ollama(f"Summarise this sentence in a few words: {first_message_from_assistant.content}")
+        if first_message_from_assistant:
+            try:
+                new_conversation_title = ask_ollama(
+                    f"Summarise this sentence in a few words: {first_message_from_assistant.content}"
+                )
+                conversation.title = new_conversation_title
+                conversation.save()
+            except Exception as e:
+                # If summarization fails, skip updating title but do not block response
+                new_conversation_title = None
 
-        conversation.title = conersation_new_title
-        conversation.save()
+        else:
+            new_conversation_title = None
 
         return Response({
             "user_message": MessageSerializer(user_message).data,
             "assistant_message": MessageSerializer(assistant_message).data,
-            "assistants": [a.name for a in assistants]
-            # "conversation_new_message": conersation_new_title
+            "assistants": [a.name for a in assistants],
+            "conversation_new_title": new_conversation_title,
         }, status=status.HTTP_201_CREATED)
