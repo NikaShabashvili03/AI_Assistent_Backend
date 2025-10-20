@@ -77,8 +77,9 @@ class MessageCreateView(APIView):
         assistant_serializer.is_valid(raise_exception=True)
         assistant_message = assistant_serializer.save()
 
-        # Update conversation title based on the first assistant message in this conversation
-        first_message_from_assistant = conversation.messages.filter(role='assistant').first()
+        first_message_from_assistant = conversation.messages.filter(role='user').first()
+
+        print(first_message_from_assistant)
 
         if first_message_from_assistant:
             try:
