@@ -1,7 +1,7 @@
 # chat/ollama_client.py
 import subprocess
 
-OLLAMA_MODEL = "deepseek-r1:1.5b"
+OLLAMA_MODEL = "gemma3"
 OLLAMA_PATH = "/snap/bin/ollama"
 
 def ask_ollama(prompt: str) -> str:
