@@ -58,7 +58,7 @@ class MessageCreateView(APIView):
         assistant_serializer.is_valid(raise_exception=True)
         assistant_message = assistant_serializer.save()
         
-        first_message_from_assistant = Message.objects.filter(role='assistant').first()
+        first_message_from_assistant = conversation.messages.filter(role='assistant').first()
 
         conersation_new_title = ask_ollama(f"Summarise this sentence in a few words: {first_message_from_assistant.content}")
 
