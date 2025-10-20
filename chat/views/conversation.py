@@ -33,7 +33,7 @@ class ConversationCreateView(APIView):
     def post(self, request):
         conversation = Conversation.objects.create(
             user=request.user,
-            title="test"
+            title="New Conversation"
         )
         serializer = ConversationSerializer(conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

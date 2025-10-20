@@ -57,9 +57,17 @@ class MessageCreateView(APIView):
         )
         assistant_serializer.is_valid(raise_exception=True)
         assistant_message = assistant_serializer.save()
+        
+        first_message_from_assistant = Message.objects.filter(role='assistant').first()
+
+        conersation_new_title = ask_ollama(f"Summarise this sentence in a few words: {first_message_from_assistant.content}")
+
+        conversation.title = conersation_new_title
+        conversation.save()
 
         return Response({
             "user_message": MessageSerializer(user_message).data,
             "assistant_message": MessageSerializer(assistant_message).data,
-            "assistants": [a.name for a in assistants],
+            "assistants": [a.name for a in assistants]
+            # "conversation_new_message": conersation_new_title
         }, status=status.HTTP_201_CREATED)
