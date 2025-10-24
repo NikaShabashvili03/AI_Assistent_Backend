@@ -28,9 +28,19 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
+
+ASGI_APPLICATION = "core.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
 ALLOWED_HOSTS = [
     '72.61.180.182',
-    'api.mmai.space'
+    'api.mmai.space',
+    'localhost'
 ]
 
 
@@ -53,6 +63,7 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'localhost:8000',
     'https://mmai.space',
     'https://api.mmai.space'
 ]
@@ -63,6 +74,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 INSTALLED_APPS = [
+    'channels',
     'rest_framework',
     'corsheaders',
     'django.contrib.admin',
@@ -72,7 +84,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
-    'chat'
+    'chat',
 ]
 
 REST_FRAMEWORK = {
