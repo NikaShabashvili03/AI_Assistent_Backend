@@ -37,3 +37,16 @@ class ConversationCreateView(APIView):
         )
         serializer = ConversationSerializer(conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class ConversationDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        try:
+            conversation = Conversation.objects.get(id=id, user=request.user)
+        except Conversation.DoesNotExist:
+            return Response({"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        conversation.delete()
+        return Response({"id": id})
