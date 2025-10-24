@@ -20,7 +20,7 @@ def update_conversation_title_on_first_assistant_message(sender, instance, creat
             prompt_text = (
                 f"Generate a concise and descriptive title for a conversation based on the following message:\n"
                 f"{instance.content}\n" 
-                f"Keep it under 50 characters, clear, and catchy."
+                f"Keep it under 10 characters, clear, and catchy."
             )
 
             try:
