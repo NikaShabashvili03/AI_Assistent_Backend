@@ -18,9 +18,12 @@ def update_conversation_title_on_first_assistant_message(sender, instance, creat
         has_other_assistant_msgs = conversation.messages.filter(role='assistant').exclude(id=instance.id).exists()
         if not has_other_assistant_msgs:
             prompt_text = (
-                f"Generate a concise and descriptive title for a conversation based on the following message:\n"
-                f"{instance.content}\n" 
-                f"Keep it under 10 characters, clear, catchy and only one option."
+                f"Create **one very short, concise, and clear title** for a conversation based on the text below.\n"
+                f"- Only 1 title\n"
+                f"- Maximum 10 characters\n"
+                f"- Catchy, simple, and easy to understand\n"
+                f"- Do NOT add extra explanations or punctuation\n\n"
+                f"Text:\n{instance.content}"
             )
 
             try:
