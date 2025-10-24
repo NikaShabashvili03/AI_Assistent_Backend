@@ -6,7 +6,6 @@ OLLAMA_PATH = "/snap/bin/ollama"
 
 def ask_ollama(prompt: str) -> str:
     try:
-
         process = subprocess.Popen(
             [OLLAMA_PATH, "run", OLLAMA_MODEL],
             stdin=subprocess.PIPE,

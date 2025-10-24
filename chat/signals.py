@@ -3,8 +3,20 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from .models import Conversation
+from .models import Conversation, Message
 from .serializers import ConversationSerializer
+
+@receiver(post_save, sender=Message)
+def update_conversation_title_on_first_assistant_message(sender, instance, created, **kwargs):
+    if not created:
+        return 
+    
+    conversation = instance.conversation
+    if instance.role == 'assistant':
+        has_other_assistant_msgs = conversation.messages.filter(role='assistant').exclude(id=instance.id).exists()
+        if not has_other_assistant_msgs:
+            conversation.title = instance.content[:100]
+            conversation.save(update_fields=['title'])
 
 @receiver(post_save, sender=Conversation)
 def conversation_update(sender, instance, created, **kwargs):
