@@ -77,14 +77,8 @@ class MessageCreateView(APIView):
         assistant_serializer.is_valid(raise_exception=True)
         assistant_message = assistant_serializer.save()
 
-        first_message_from_assistant = conversation.messages.filter(role='user').first()
-
-        conversation.title = first_message_from_assistant.content
-        conversation.save()
-
         return Response({
             "user_message": MessageSerializer(user_message).data,
             "assistant_message": MessageSerializer(assistant_message).data,
             "assistants": [a.name for a in assistants],
-            "conversation_new_title": first_message_from_assistant.content,
         }, status=status.HTTP_201_CREATED)
