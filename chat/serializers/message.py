@@ -9,11 +9,6 @@ class MessageSerializer(serializers.ModelSerializer):
 class MessageCreateSerializer(serializers.Serializer):
     content = serializers.CharField(max_length=5000)
 
-    assistant_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=False
-    )
-
     def create(self, validated_data):
             conversation = self.context.get('conversation')
             role = self.context.get('role')

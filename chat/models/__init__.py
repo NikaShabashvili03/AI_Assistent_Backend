@@ -1,3 +1,3 @@
-from .conversation import Conversation
+from .conversation import Conversation, ConversationAssistant
 from .message import Message
-from .assistant import Assistant
+from .assistant import Assistant, AssistantTags

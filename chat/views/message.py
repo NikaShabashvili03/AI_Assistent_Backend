@@ -28,10 +28,8 @@ class MessageCreateView(APIView):
         except Conversation.DoesNotExist:
             return Response({"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        assistant_ids = request.data.get('assistant_ids', [])
-        assistants = Assistant.objects.filter(id__in=assistant_ids)
-
-        # Create user message
+        assistants = [ca.assistant for ca in conversation.assistants.all()]
+        
         user_serializer = MessageCreateSerializer(
             data=request.data,
             context={'conversation': conversation, 'role': 'user'}
@@ -39,20 +37,17 @@ class MessageCreateView(APIView):
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
-        # Build system prompt from assistants if any
         combined_prompt = ""
-        if assistants.exists():
+        if assistants:
             combined_prompt = "\n".join(
                 [f"System ({a.name}): {a.prompt}" for a in assistants]
             ) + "\n"
 
-        # Get the last 10 messages in chronological order
         previous_messages = conversation.messages.order_by('-created_at')[:10]
         previous_messages = reversed(previous_messages)  # chronological order
 
         conversation_history = "\n".join(f"{msg.role}: {msg.content}" for msg in previous_messages)
 
-        # Build prompt for AI
         prompt_text = (
             "be as concise and laconic as possible, give only an answer, do not think out loud\n"
             f"{combined_prompt}"

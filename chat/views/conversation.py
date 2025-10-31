@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from accounts.permissions import IsAuthenticated
 from rest_framework import status
-from ..models import Conversation, Assistant
+from ..models import Conversation, Assistant, ConversationAssistant
 from ..serializers import ConversationSerializer, MessageCreateSerializer
 from django.db.models import Q
 from ..utils.ollama import ask_ollama
@@ -61,6 +61,13 @@ class ConversationCreateView(APIView):
         
         assistants = Assistant.objects.filter(id__in=assistant_ids)
 
+        conversation_assistants = [
+            ConversationAssistant(conversation=conversation, assistant=assistant)
+            for assistant in assistants
+        ]
+
+        ConversationAssistant.objects.bulk_create(conversation_assistants)
+
         user_serializer = MessageCreateSerializer(
             data={"content": message_content},
             context={'conversation': conversation, 'role': 'user'}
@@ -89,13 +96,13 @@ class ConversationCreateView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
 
-        assistant_serializer = MessageCreateSerializer(
+        message = MessageCreateSerializer(
             data={"content": ai_content},
             context={'conversation': conversation, 'role': 'assistant'}
         )
 
-        assistant_serializer.is_valid(raise_exception=True)
-        assistant_serializer.save()
+        message.is_valid(raise_exception=True)
+        message.save()
 
         serializer = ConversationSerializer(conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
