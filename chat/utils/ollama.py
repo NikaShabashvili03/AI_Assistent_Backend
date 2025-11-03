@@ -1,7 +1,7 @@
 # chat/ollama_client.py
 import subprocess
 
-OLLAMA_MODEL = "mistral:instruct"
+OLLAMA_MODEL = "gemma3:latest"
 OLLAMA_PATH = "/snap/bin/ollama"
 
 def ask_ollama(prompt: str) -> str:
