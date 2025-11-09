@@ -12,9 +12,11 @@ class User(AbstractBaseUser):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     last_login = models.DateTimeField(null=True, blank=True)
 
+    token_plan = models.ForeignKey('accounts.TokenPlan', on_delete=models.SET_NULL, null=True, blank=True)
+    
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['firstname', 'lastname']
 

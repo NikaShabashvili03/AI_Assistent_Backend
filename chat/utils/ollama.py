@@ -1,8 +1,13 @@
 # chat/ollama_client.py
 import subprocess
+import os
+from dotenv import load_dotenv
 
-OLLAMA_MODEL = "gemma3:latest"
-OLLAMA_PATH = "/snap/bin/ollama"
+
+load_dotenv()
+
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma3:latest")
+OLLAMA_PATH = os.getenv("OLLAMA_PATH", "/snap/bin/ollama")
 
 def ask_ollama(prompt: str) -> str:
     try:
