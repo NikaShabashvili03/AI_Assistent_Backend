@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from accounts.permissions import IsAuthenticated
 from rest_framework import status
-from ..models import Message, Conversation, Assistant
+from ..models import Message, Conversation
 from ..serializers import MessageSerializer, MessageCreateSerializer
 from ..utils.ollama import ask_ollama
 from ..utils.tokens import count_tokens, record_token_usage, has_tokens_left
@@ -33,20 +33,13 @@ class MessageCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        assistants = [ca.assistant for ca in conversation.assistants.all()]
-
+       
         user_serializer = MessageCreateSerializer(
             data=request.data,
             context={'conversation': conversation, 'role': 'user'}
         )
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
-
-        combined_prompt = ""
-        if assistants:
-            combined_prompt = "\n".join(
-                [f"System ({a.name}): {a.prompt}" for a in assistants]
-            ) + "\n"
 
         previous_messages = conversation.messages.order_by('-created_at')[:10]
         previous_messages = reversed(previous_messages) 
@@ -57,7 +50,6 @@ class MessageCreateView(APIView):
 
         prompt_text = (
             "be as concise and laconic as possible, give only an answer, do not think out loud\n"
-            f"{combined_prompt}"
             f"{conversation_history}\n"
             f"user: {user_message.content}"
         )
@@ -96,7 +88,6 @@ class MessageCreateView(APIView):
         return Response({
             "user_message": MessageSerializer(user_message).data,
             "assistant_message": MessageSerializer(assistant_message).data,
-            "assistants": [a.name for a in assistants],
             "tokens": {
                 "input": input_tokens,
                 "output": output_tokens,

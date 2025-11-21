@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from accounts.permissions import IsAuthenticated
 from rest_framework import status
-from ..models import Conversation, Assistant, ConversationAssistant
+from ..models import Conversation
 from ..serializers import ConversationSerializer, MessageCreateSerializer
 from django.db.models import Q
 from ..utils.ollama import ask_ollama
@@ -57,16 +57,6 @@ class ConversationCreateView(APIView):
         )
 
         message_content = request.data.get("content", "Hello!")
-        assistant_ids = request.data.get("assistant_ids", [])
-        
-        assistants = Assistant.objects.filter(id__in=assistant_ids)
-
-        conversation_assistants = [
-            ConversationAssistant(conversation=conversation, assistant=assistant)
-            for assistant in assistants
-        ]
-
-        ConversationAssistant.objects.bulk_create(conversation_assistants)
 
         user_serializer = MessageCreateSerializer(
             data={"content": message_content},
@@ -76,15 +66,8 @@ class ConversationCreateView(APIView):
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
-        combined_prompt = ""
-        if assistants.exists():
-            combined_prompt = "\n".join(
-                [f"System ({a.name}): {a.prompt}" for a in assistants]
-            ) + "\n"
-
         prompt_text = (
             "be as concise and laconic as possible, give only an answer, do not think out loud\n"
-            f"{combined_prompt}"
             f"user: {user_message.content}"
         )
 
