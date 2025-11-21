@@ -18,8 +18,6 @@ class FeedListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        query = request.GET.get('query', '')
-
         url = "https://serpapi.com/search"
         params = {
             "engine": "google_scholar",
