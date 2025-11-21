@@ -140,6 +140,8 @@ DATABASES = {
     }
 }
 
+
+SERPAPI_KEY = os.getenv("SERPAPI_KEY", "test")
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

@@ -34,7 +34,6 @@ class ConversationListView(APIView):
         serializer = ConversationSerializer(conversations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class ConversationDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
