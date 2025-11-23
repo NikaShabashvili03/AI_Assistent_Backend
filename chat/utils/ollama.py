@@ -86,10 +86,6 @@ def ask_ollama(prompt: str, json_format: bool = False) -> str:
         print(f"An unexpected error occurred: {e}")
         return ""
 
-# ==========================================
-# 3. ChromaDB Integration
-# ==========================================
-
 class OllamaEmbeddingFunction(chromadb.EmbeddingFunction):
     def __call__(self, texts: List[str]) -> List[List[float]]:
         print(f"DEBUG: Generating {len(texts)} embeddings with {EMBED_MODEL}...")
