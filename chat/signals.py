@@ -36,18 +36,20 @@ def update_conversation_title_on_first_assistant_message(sender, instance, creat
 
 @receiver(post_save, sender=Conversation)
 def conversation_update(sender, instance, created, **kwargs):
-    if created:
-        return
+    # ES AR DAGAVIWYDES
+    pass
+    # if created:
+    #     return
     
-    channel_layer = get_channel_layer()
-    group_name = f"conversations_{instance.user.id}"
+    # channel_layer = get_channel_layer()
+    # group_name = f"conversations_{instance.user.id}"
 
-    data = {
-        "type": "send_conversation_update",
-        "data": ConversationSerializer(instance).data
-    }
+    # data = {
+    #     "type": "send_conversation_update",
+    #     "data": ConversationSerializer(instance).data
+    # }
 
-    async_to_sync(channel_layer.group_send)(group_name, data)
+    # async_to_sync(channel_layer.group_send)(group_name, data)
 
 
 # @receiver(post_delete, sender=Conversation)

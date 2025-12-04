@@ -12,7 +12,10 @@ class MessageListView(APIView):
 
     def get(self, request, conversation_id):
         try:
-            conversation = Conversation.objects.get(id=conversation_id, user=request.user)
+            conversation = Conversation.objects.get(
+                id=conversation_id,
+                conversation_users__user=request.user
+            )
         except Conversation.DoesNotExist:
             return Response({"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -26,24 +29,22 @@ class MessageCreateView(APIView):
 
     def post(self, request, conversation_id):
         try:
-            conversation = Conversation.objects.get(id=conversation_id, user=request.user)
-        except Conversation.DoesNotExist:
-            return Response(
-                {"error": "Conversation not found"},
-                status=status.HTTP_404_NOT_FOUND
+            conversation = Conversation.objects.get(
+                id=conversation_id,
+                conversation_users__user=request.user
             )
+        except Conversation.DoesNotExist:
+            return Response({"error": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
 
-       
         user_serializer = MessageCreateSerializer(
             data=request.data,
-            context={'conversation': conversation, 'role': 'user'}
+            context={'conversation': conversation, 'role': 'user', 'user': request.user}
         )
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
         previous_messages = conversation.messages.order_by('-created_at')[:10]
-        previous_messages = reversed(previous_messages) 
-
+        previous_messages = reversed(previous_messages)
         conversation_history = "\n".join(
             f"{msg.role}: {msg.content}" for msg in previous_messages
         )
@@ -55,27 +56,19 @@ class MessageCreateView(APIView):
         )
 
         input_tokens = count_tokens(prompt_text)
-
         if not has_tokens_left(request.user, input_tokens):
             return Response(
-                {
-                    "error": "Daily token limit reached. "
-                             "Upgrade your plan or wait until tomorrow."
-                },
+                {"error": "Daily token limit reached. Upgrade your plan or wait until tomorrow."},
                 status=status.HTTP_402_PAYMENT_REQUIRED
             )
 
         try:
             ai_content = ask_ollama(prompt_text)
         except Exception as e:
-            return Response(
-                {"error": f"AI service failed: {str(e)}"},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
+            return Response({"error": f"AI service failed: {str(e)}"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         output_tokens = count_tokens(ai_content)
         total_tokens = input_tokens + output_tokens
-
         record_token_usage(request.user, total_tokens)
 
         assistant_serializer = MessageCreateSerializer(

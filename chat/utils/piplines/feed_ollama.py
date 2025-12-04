@@ -4,7 +4,7 @@ import json
 import uuid
 import ollama
 import chromadb
-from mysql.connector import Error
+
 from typing import List, Dict
 import django
 
@@ -145,7 +145,7 @@ class BookPipeline:
             
             try:
                 response = ollama.chat(
-                    model='llama3',
+                    model='mistral:instruct',
                     messages=[{'role': 'user', 'content': prompt}],
                     format='json' 
                 )

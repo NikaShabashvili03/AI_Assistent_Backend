@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'chat',
+    'metadata'
 ]
 
 REST_FRAMEWORK = {

@@ -28,31 +28,21 @@
 #     except Exception as e:
 #         return f"Ollama exception: {e}"
 
-# chat/ollama_client.py
-
 import requests
 import json
 import chromadb
 from typing import List, Dict
 
-# ==========================================
-# 1. Configuration ⚙️
-# ==========================================
 OLLAMA_URL = "http://localhost:11434"
-# Ensure these models are pulled locally (ollama pull model_name)
-GEN_MODEL = "llama3"              # Use llama3 for better JSON handling/instruction following
-EMBED_MODEL = "nomic-embed-text"  # Essential for ChromaDB vector calculation
-
-# ==========================================
-# 2. Ollama API Functions (using requests for direct API control)
-# ==========================================
+GEN_MODEL = "mistral:instruct"           
+EMBED_MODEL = "nomic-embed-text" 
 
 def ask_ollama(prompt: str, json_format: bool = False) -> str:
     payload = {
         "model": GEN_MODEL,
         "prompt": prompt,
         "stream": True,
-        "options": {"num_predict": 1024} # Limits output length for speed
+        "options": {"num_predict": 1024} 
     }
     if json_format:
         payload["format"] = "json"
