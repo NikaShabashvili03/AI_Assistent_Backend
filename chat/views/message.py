@@ -6,6 +6,8 @@ from ..models import Message, Conversation
 from ..serializers import MessageSerializer, MessageCreateSerializer
 from ..utils.ollama import ask_ollama
 from ..utils.tokens import count_tokens, record_token_usage, has_tokens_left
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class MessageListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -43,6 +45,8 @@ class MessageCreateView(APIView):
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
+        self.send_ws_message(conversation_id, user_message)
+
         previous_messages = conversation.messages.order_by('-created_at')[:10]
         previous_messages = reversed(previous_messages)
         conversation_history = "\n".join(
@@ -78,6 +82,8 @@ class MessageCreateView(APIView):
         assistant_serializer.is_valid(raise_exception=True)
         assistant_message = assistant_serializer.save()
 
+        self.send_ws_message(conversation_id, assistant_message)
+
         return Response({
             "user_message": MessageSerializer(user_message).data,
             "assistant_message": MessageSerializer(assistant_message).data,
@@ -87,3 +93,15 @@ class MessageCreateView(APIView):
                 "total": total_tokens
             }
         }, status=status.HTTP_201_CREATED)
+
+    def send_ws_message(self, conversation_id, message_obj):
+        channel_layer = get_channel_layer()
+        group_name = f"chat_{conversation_id}"
+
+        async_to_sync(channel_layer.group_send)(group_name, {
+            "type": "chat_message",
+            "message": message_obj.content,
+            "role": message_obj.role,
+            "sender": message_obj.sent_by.id if message_obj.sent_by else None,
+            "created_at": message_obj.created_at.isoformat()
+        })

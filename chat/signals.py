@@ -36,7 +36,9 @@ def update_conversation_title_on_first_assistant_message(sender, instance, creat
 
 @receiver(post_save, sender=Conversation)
 def conversation_update(sender, instance, created, **kwargs):
-    # ES AR DAGAVIWYDES
+    # 'Conversation' object has no attribute 'user'
+    # f"conversations_{instance.user.id}" // id ar aris swori imitomrom conversationidan vegar igebs pirdapir users 
+    # -------------------------------------------
     pass
     # if created:
     #     return
@@ -50,16 +52,3 @@ def conversation_update(sender, instance, created, **kwargs):
     # }
 
     # async_to_sync(channel_layer.group_send)(group_name, data)
-
-
-# @receiver(post_delete, sender=Conversation)
-# def conversation_deleted(sender, instance, **kwargs):
-#     channel_layer = get_channel_layer()
-#     group_name = f"conversations_{instance.user.id}"
-
-#     data = {
-#         "type": "send_conversation_delete",
-#         "data": {"id": instance.id}
-#     }
-
-#     async_to_sync(channel_layer.group_send)(group_name, data)
