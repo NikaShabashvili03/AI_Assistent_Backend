@@ -1,5 +1,4 @@
 import re
-
 IPv4_REGEX = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
 IPv6_REGEX = re.compile(r'^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$')
 

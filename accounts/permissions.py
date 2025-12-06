@@ -7,3 +7,7 @@ class IsAuthenticated(BasePermission):
 class AllowAny(BasePermission):
     def has_permission(self, request, view):
         return True
+
+class HasAccess(BasePermission):
+    def has_permission(self, request, view):
+        return True

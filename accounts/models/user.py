@@ -30,4 +30,3 @@ class User(AbstractBaseUser):
     def __str__(self):
         return f"{self.firstname} - {self.lastname}"
 
-
