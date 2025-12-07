@@ -2,6 +2,11 @@ import re
 IPv4_REGEX = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
 IPv6_REGEX = re.compile(r'^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$')
 
+def is_connected(me, other):
+    from accounts.models import Connection
+    u1, u2 = sorted([me, other], key=lambda x: x.id)
+    return Connection.objects.filter(user1=u1, user2=u2).exists()
+
 def is_valid_ip(ip):
     if IPv4_REGEX.match(ip):
         # Further check each octet is 0-255

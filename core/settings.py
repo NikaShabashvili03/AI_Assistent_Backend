@@ -85,7 +85,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'chat',
-    'metadata'
+    'metadata',
+    'subscriptions',
 ]
 
 REST_FRAMEWORK = {
@@ -183,3 +184,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STRIPE_SUCCESS_URL = os.getenv('STRIPE_SUCCESS_URL', 'https://yourapp.com/success')
+STRIPE_CANCEL_URL = os.getenv('STRIPE_CANCEL_URL', 'https://yourapp.com/cancel')

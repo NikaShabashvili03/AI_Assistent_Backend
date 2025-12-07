@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from ..models import ConnectionRequest, Connection, User
 
-
 class ReceivedConnectionRequests(APIView):
     permission_classes = [IsAuthenticated]
 

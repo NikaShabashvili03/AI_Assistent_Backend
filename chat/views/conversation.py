@@ -6,6 +6,7 @@ from ..models import Conversation, ConversationUsers
 from ..serializers import ConversationSerializer, MessageCreateSerializer
 from accounts.permissions import IsAuthenticated
 from ..utils.ollama import ask_ollama
+from accounts.utils import is_connected
 
 class ConversationListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -64,10 +65,12 @@ class ConversationCreateView(APIView):
         ConversationUsers.objects.create(conversation=conversation, user=request.user)
 
         message_content = request.data.get("content", "Hello!")
+
         user_serializer = MessageCreateSerializer(
             data={"content": message_content},
             context={'conversation': conversation, 'role': 'user'}
         )
+        
         user_serializer.is_valid(raise_exception=True)
         user_message = user_serializer.save()
 
