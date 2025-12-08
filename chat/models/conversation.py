@@ -8,6 +8,9 @@ class Conversation(models.Model):
     def __str__(self):
         return self.title or f"Conversation {self.id}"
     
+    def is_group(self):
+        return self.conversation_users.count() > 1
+    
 class ConversationUsers(models.Model):
     conversation = models.ForeignKey(
         Conversation, related_name="conversation_users", on_delete=models.CASCADE

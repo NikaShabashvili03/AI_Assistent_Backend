@@ -34,7 +34,7 @@ import chromadb
 from typing import List, Dict
 
 OLLAMA_URL = "http://localhost:11434"
-GEN_MODEL = "mistral:instruct"           
+GEN_MODEL = "llama3:latest"           
 EMBED_MODEL = "nomic-embed-text" 
 
 def ask_ollama(prompt: str, json_format: bool = False) -> str:
@@ -42,8 +42,9 @@ def ask_ollama(prompt: str, json_format: bool = False) -> str:
         "model": GEN_MODEL,
         "prompt": prompt,
         "stream": True,
-        "options": {"num_predict": 1024} 
+        "options": {"num_predict": 1024}
     }
+
     if json_format:
         payload["format"] = "json"
 
@@ -57,24 +58,24 @@ def ask_ollama(prompt: str, json_format: bool = False) -> str:
         response.raise_for_status()
 
         full_response = ""
+
         for line in response.iter_lines():
-            if line:
-                try:
-                    data = json.loads(line)
-                    full_response += data.get("response", "")
-                    if data.get("done", False):
-                        break
-                except json.JSONDecodeError:
-                    print(f"DEBUG: Could not decode JSON line: {line.decode('utf-8')[:50]}...")
+            if not line:
+                continue
+
+            try:
+                data = json.loads(line)
+                full_response += data.get("response", "")
+                if data.get("done"):
+                    break
+            except json.JSONDecodeError:
+                continue
 
         return full_response.strip()
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error: Ollama request error. Is Ollama running? {e}")
-        return ""
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        return ""
+        print(f"[ERROR] OLLAMA GENERATION FAILED: {e}")
+        return "AI service error."
 
 class OllamaEmbeddingFunction(chromadb.EmbeddingFunction):
     def __call__(self, texts: List[str]) -> List[List[float]]:

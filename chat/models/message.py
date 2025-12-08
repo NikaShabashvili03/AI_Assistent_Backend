@@ -1,6 +1,7 @@
 from django.db import models
 from . import Conversation
 from accounts.models import User
+
 class Message(models.Model):
     ROLE_CHOICES = (
         ('user', 'User'),

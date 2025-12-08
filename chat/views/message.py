@@ -25,7 +25,6 @@ class MessageListView(APIView):
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class MessageCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -47,6 +46,15 @@ class MessageCreateView(APIView):
 
         self.send_ws_message(conversation_id, user_message)
 
+        content_lower = user_message.content.lower()
+
+        if "@geobot" not in content_lower and conversation.is_group():
+            return Response({
+                "user_message": MessageSerializer(user_message).data,
+                "assistant_message": None,
+                "tokens": None
+            }, status=status.HTTP_201_CREATED)
+
         previous_messages = conversation.messages.order_by('-created_at')[:10]
         previous_messages = reversed(previous_messages)
         conversation_history = "\n".join(
@@ -62,7 +70,7 @@ class MessageCreateView(APIView):
         input_tokens = count_tokens(prompt_text)
         if not has_tokens_left(request.user, input_tokens):
             return Response(
-                {"error": "Daily token limit reached. Upgrade your plan or wait until tomorrow."},
+                {"error": "Daily token limit reached."},
                 status=status.HTTP_402_PAYMENT_REQUIRED
             )
 
@@ -98,10 +106,13 @@ class MessageCreateView(APIView):
         channel_layer = get_channel_layer()
         group_name = f"chat_{conversation_id}"
 
-        async_to_sync(channel_layer.group_send)(group_name, {
-            "type": "chat_message",
-            "message": message_obj.content,
-            "role": message_obj.role,
-            "sender": message_obj.sent_by.id if message_obj.sent_by else None,
-            "created_at": message_obj.created_at.isoformat()
-        })
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "chat_message",
+                "message": message_obj.content,
+                "role": message_obj.role,
+                "sender": message_obj.sent_by.id if message_obj.sent_by else None,
+                "created_at": message_obj.created_at.isoformat()
+            }
+        )

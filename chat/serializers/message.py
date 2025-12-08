@@ -12,6 +12,12 @@ class MessageSerializer(serializers.ModelSerializer):
 class MessageCreateSerializer(serializers.Serializer):
     content = serializers.CharField(max_length=5000)
 
+    def validate_content(self, value):
+        cleaned = value.strip()
+        if cleaned == "":
+            raise serializers.ValidationError("Message cannot be empty.")
+        return cleaned
+
     def create(self, validated_data):
         conversation = self.context.get('conversation')
         role = self.context.get('role')
