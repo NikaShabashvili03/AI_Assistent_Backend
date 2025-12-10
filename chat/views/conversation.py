@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from ..models import Conversation, ConversationUsers
-from ..serializers import ConversationSerializer, MessageCreateSerializer
+from ..serializers import ConversationSerializer, MessageCreateSerializer, ConversationCreateSerializer
 from accounts.permissions import IsAuthenticated
 from ..utils.ollama import ask_ollama
 from accounts.utils import is_connected
@@ -56,46 +56,34 @@ class ConversationDetailView(APIView):
 
 class ConversationCreateView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ConversationCreateSerializer
 
     def post(self, request):
-        conversation = Conversation.objects.create(
-            title=request.data.get("title", "New Conversation")
+        data = request.data.copy()
+
+        creator_id = request.user.id
+        users = data.get("users", [])
+
+        if not isinstance(users, list):
+            users = [users]
+
+        users = list(set(users))
+
+        if creator_id in users:
+            users.remove(creator_id)
+        users.insert(0, creator_id)
+
+        data["users"] = users
+
+        create_serializer = self.serializer_class(
+            data=data,
+            context={"request": request}
         )
+        create_serializer.is_valid(raise_exception=True)
+        conversation = create_serializer.save()
 
-        ConversationUsers.objects.create(conversation=conversation, user=request.user)
-
-        message_content = request.data.get("content", "Hello!")
-
-        user_serializer = MessageCreateSerializer(
-            data={"content": message_content},
-            context={'conversation': conversation, 'role': 'user'}
-        )
-        
-        user_serializer.is_valid(raise_exception=True)
-        user_message = user_serializer.save()
-
-        prompt_text = (
-            "be as concise and laconic as possible, give only an answer, do not think out loud\n"
-            f"user: {user_message.content}"
-        )
-        try:
-            ai_content = ask_ollama(prompt_text)
-        except Exception as e:
-            return Response(
-                {"error": f"AI service failed: {str(e)}"},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-
-        message_serializer = MessageCreateSerializer(
-            data={"content": ai_content},
-            context={'conversation': conversation, 'role': 'assistant'}
-        )
-        message_serializer.is_valid(raise_exception=True)
-        message_serializer.save()
-
-        serializer = ConversationSerializer(conversation)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+        response_serializer = ConversationSerializer(conversation)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class ConversationDeleteView(APIView):
     permission_classes = [IsAuthenticated]
