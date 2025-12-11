@@ -6,6 +6,8 @@ from .models import Log, Session
 from accounts.middleware import get_current_user, get_current_ip
 import json
 from django.utils.timezone import now
+from django.db import transaction
+from accounts.models import Connection
 
 @receiver(post_save)
 def log_create_update(sender, instance, created, **kwargs):

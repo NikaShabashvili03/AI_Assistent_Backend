@@ -6,6 +6,9 @@ from channels.layers import get_channel_layer
 from .models import Conversation, Message
 from .serializers import ConversationSerializer
 from .utils.ollama import ask_ollama
+from django.db import transaction
+from accounts.models import Connection
+from .models import Conversation, ConversationUsers
 
 @receiver(post_save, sender=Message)
 def update_conversation_title_on_first_assistant_message(sender, instance, created, **kwargs):
@@ -52,3 +55,27 @@ def conversation_update(sender, instance, created, **kwargs):
     # }
 
     # async_to_sync(channel_layer.group_send)(group_name, data)
+
+@receiver(post_save, sender=Connection)
+def create_conversation_on_connection(sender, instance, created, **kwargs):
+    if created:
+        user1 = instance.user1
+        user2 = instance.user2
+
+        existing_chat = Conversation.objects.filter(
+            is_group=False,
+            conversation_users__user=user1
+        ).filter(
+            conversation_users__user=user2
+        ).exists()
+
+        if not existing_chat:
+            with transaction.atomic():
+                conversation = Conversation.objects.create(is_group=False)
+                
+                ConversationUsers.objects.create(
+                    conversation=conversation, user=user1, role="owner"
+                )
+                ConversationUsers.objects.create(
+                    conversation=conversation, user=user2, role="owner"
+                )

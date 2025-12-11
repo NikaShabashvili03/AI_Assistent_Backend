@@ -1,1 +1,1 @@
-from .conversation import IsConversationOwnerOrAdmin, IsConversationOwner
+from .conversation import IsConversationOwnerOrAdmin, IsConversationOwner, IsGroupConversation

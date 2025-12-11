@@ -1,7 +1,9 @@
 from rest_framework import serializers
+from django.db.models import Q
 from ..models import Conversation, ConversationUsers
 from accounts.serializers import UserSerializer
 from accounts.models import User
+from accounts.utils import is_connected
 
 class ConversationUserSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -12,17 +14,14 @@ class ConversationUserSerializer(serializers.ModelSerializer):
 
 class ConversationSerializer(serializers.ModelSerializer):
     users = serializers.SerializerMethodField()
-    is_group = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = Conversation
         fields = ["id", "title", "is_group", "created_at", "users"]
 
-    def get_is_group(self, obj):
-        return obj.conversation_users.count() > 2
-
     def get_users(self, obj):
-        return ConversationUserSerializer(obj.conversation_users.all(), many=True).data
+        users = obj.conversation_users.select_related('user').all()
+        return ConversationUserSerializer(users, many=True).data
 
 class ConversationCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=False, allow_blank=True, allow_null=True)
@@ -34,44 +33,63 @@ class ConversationCreateSerializer(serializers.Serializer):
 
     def validate_users(self, user_ids):
         user_ids = list(set(user_ids))
+        request_user = self.context["request"].user
+
+        if request_user.id in user_ids:
+            user_ids.remove(request_user.id)
+
+        if not user_ids:
+            raise serializers.ValidationError("You must include at least one other user.")
 
         valid_users = User.objects.filter(id__in=user_ids)
         if valid_users.count() != len(user_ids):
-            raise serializers.ValidationError("Invalid user IDs included.")
+            raise serializers.ValidationError("One or more user IDs are invalid.")
 
-        request_user = self.context["request"].user
-
-        from accounts.utils import is_connected  
-
-        for uid in user_ids:
-            if uid == request_user.id:
-                continue 
-
-            other_user = User.objects.get(id=uid)
-
-            if not is_connected(request_user, other_user):
-                raise serializers.ValidationError(
-                    f"User {uid} is not connected with you."
-                )
+        for target_user in valid_users:
+            if not is_connected(request_user, target_user):
+                 raise serializers.ValidationError(f"User {target_user.id} is not connected with you.")
 
         return user_ids
 
     def create(self, validated_data):
         title = validated_data.get("title", None)
         user_ids = validated_data["users"]
+        request_user = self.context["request"].user
+        
+        all_participant_ids = [request_user.id] + user_ids
+        is_group = len(all_participant_ids) > 2
 
-        conversation = Conversation.objects.create(title=title)
+        if not is_group:
+            other_user_id = user_ids[0]
+            existing = Conversation.objects.filter(
+                is_group=False,
+                conversation_users__user_id=request_user.id
+            ).filter(
+                conversation_users__user_id=other_user_id
+            ).first()
 
-        for i, uid in enumerate(user_ids):
-            role = "owner" if i == 0 else "member"
-            ConversationUsers.objects.create(
-                conversation=conversation,
-                user_id=uid,
-                role=role
+            if existing:
+                return existing
+
+        conversation = Conversation.objects.create(
+            title=title if is_group else None,
+            is_group=is_group
+        )
+
+        conversation_users = []
+        for uid in all_participant_ids:
+            if not is_group:
+                role = "owner"
+            else:
+                role = "owner" if uid == request_user.id else "member"
+            
+            conversation_users.append(
+                ConversationUsers(conversation=conversation, user_id=uid, role=role)
             )
 
-        return conversation
+        ConversationUsers.objects.bulk_create(conversation_users)
 
+        return conversation
+    
     def to_representation(self, instance):
-        from .conversation import ConversationSerializer
         return ConversationSerializer(instance).data

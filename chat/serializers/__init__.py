@@ -1,3 +1,3 @@
-from .conversation import ConversationSerializer, ConversationCreateSerializer
+from .conversation import ConversationSerializer, ConversationCreateSerializer, ConversationUserSerializer
 from .message import MessageSerializer, MessageCreateSerializer
 from .blog import BlogSerializer
