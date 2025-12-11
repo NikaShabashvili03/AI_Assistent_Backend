@@ -48,7 +48,7 @@ class MessageCreateView(APIView):
 
         content_lower = user_message.content.lower()
 
-        if "@geobot" not in content_lower and conversation.is_group:
+        if "@geobot" not in content_lower and conversation.conversation_users.count() == 2:
             return Response({
                 "user_message": MessageSerializer(user_message).data,
                 "assistant_message": None,
