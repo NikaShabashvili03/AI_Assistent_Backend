@@ -115,18 +115,32 @@ class LeaveConversationView(APIView):
 
         if cu.role == "owner":
             owner_count = ConversationUsers.objects.filter(conversation=conversation, role="owner").count()
+
             if owner_count == 1:
-                return Response(
-                    {"error": "You are the only owner. Transfer ownership before leaving or delete the conversation."}, 
-                    status=status.HTTP_403_FORBIDDEN
+                new_owner_cu = (
+                    ConversationUsers.objects
+                    .filter(conversation=conversation)
+                    .exclude(role="owner")
+                    .order_by('joined_at')
+                    .first()
                 )
 
+                if new_owner_cu:
+                    new_owner_cu.role = "owner"
+                    new_owner_cu.save()
+                else:
+                    conversation.delete()
+                    return Response(
+                        {"success": True, "message": "You left and the conversation was deleted as no members remain."}
+                    )
+
         cu.delete()
-        
+
         if conversation.conversation_users.count() == 0:
             conversation.delete()
 
         return Response({"success": True, "message": "You have left the conversation."})
+
 
 class TransferOwnershipSwapView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsConversationOwner, IsGroupConversation]

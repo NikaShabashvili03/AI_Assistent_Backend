@@ -27,7 +27,7 @@ class ConversationCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     users = serializers.ListField(
         child=serializers.IntegerField(),
-        allow_empty=False,
+        allow_empty=True, 
         write_only=True
     )
 
@@ -39,7 +39,7 @@ class ConversationCreateSerializer(serializers.Serializer):
             user_ids.remove(request_user.id)
 
         if not user_ids:
-            raise serializers.ValidationError("You must include at least one other user.")
+            return user_ids
 
         valid_users = User.objects.filter(id__in=user_ids)
         if valid_users.count() != len(user_ids):
@@ -59,7 +59,9 @@ class ConversationCreateSerializer(serializers.Serializer):
         all_participant_ids = [request_user.id] + user_ids
         is_group = len(all_participant_ids) > 2
 
-        if not is_group:
+        print(all_participant_ids, is_group)
+
+        if not is_group and len(user_ids) == 1:
             other_user_id = user_ids[0]
             existing = Conversation.objects.filter(
                 is_group=False,
@@ -72,7 +74,7 @@ class ConversationCreateSerializer(serializers.Serializer):
                 return existing
 
         conversation = Conversation.objects.create(
-            title=title if is_group else None,
+            title=title if title else None,
             is_group=is_group
         )
 
