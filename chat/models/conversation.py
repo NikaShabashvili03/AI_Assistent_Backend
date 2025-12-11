@@ -12,16 +12,31 @@ class Conversation(models.Model):
         return self.conversation_users.count() > 1
     
 class ConversationUsers(models.Model):
+
+    ROLE_CHOICES = (
+        ("owner", "Owner"),    
+        ("admin", "Admin"),   
+        ("member", "Member"), 
+    )
+
     conversation = models.ForeignKey(
         Conversation, related_name="conversation_users", on_delete=models.CASCADE
     )
+
     user = models.ForeignKey(
         User, related_name="user_conversations", on_delete=models.CASCADE
     )
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default="member"
+    )
+
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("conversation", "user") 
+        unique_together = ("conversation", "user")
 
     def __str__(self):
-        return f"{self.user.firstname} in {self.conversation}"
+        return f"{self.user.firstname} ({self.role}) in {self.conversation}"

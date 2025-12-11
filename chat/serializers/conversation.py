@@ -8,7 +8,7 @@ class ConversationUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConversationUsers
-        fields = ["user", "joined_at"]
+        fields = ["user", "joined_at", "role"]
 
 class ConversationSerializer(serializers.ModelSerializer):
     users = serializers.SerializerMethodField()
@@ -23,7 +23,7 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     def get_users(self, obj):
         return ConversationUserSerializer(obj.conversation_users.all(), many=True).data
-    
+
 class ConversationCreateSerializer(serializers.Serializer):
     title = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     users = serializers.ListField(
@@ -62,10 +62,12 @@ class ConversationCreateSerializer(serializers.Serializer):
 
         conversation = Conversation.objects.create(title=title)
 
-        for uid in user_ids:
+        for i, uid in enumerate(user_ids):
+            role = "owner" if i == 0 else "member"
             ConversationUsers.objects.create(
                 conversation=conversation,
-                user_id=uid
+                user_id=uid,
+                role=role
             )
 
         return conversation
