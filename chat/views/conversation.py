@@ -179,3 +179,26 @@ class ConversationUserList(APIView):
 
         members = ConversationUsers.objects.filter(conversation=conversation).select_related('user')
         return Response(ConversationUserSerializer(members, many=True).data)
+    
+class RenameConversationView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsConversationOwner]
+
+    def post(self, request, conversation_id):
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        self.check_object_permissions(request, conversation)
+
+        new_title = request.data.get("title", "").strip()
+
+        if not new_title:
+            return Response(
+                {"error": "Group title cannot be empty."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        conversation.title = new_title
+        conversation.save()
+
+        return Response(
+            ConversationSerializer(conversation).data,
+            status=status.HTTP_200_OK
+        )

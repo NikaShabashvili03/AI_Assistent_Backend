@@ -7,7 +7,7 @@ from accounts.utils import is_connected
 
 class ConversationUserSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-
+    
     class Meta:
         model = ConversationUsers
         fields = ["user", "joined_at", "role"]
